@@ -15,3 +15,4 @@ pub mod markdown;
 pub mod visitors;
 pub mod format;
 pub mod constants;
+pub mod query;
