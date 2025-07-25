@@ -23,6 +23,15 @@ impl<T> ParseResult<T> {
         }
         self.output
     }
+    pub fn to_result(self) -> Result<T, Vec<String>> {
+        if !self.errors.is_empty() {
+            return Err(self.errors)
+        }
+        Ok(self.output)
+    }
+    pub fn unwrap_unchecked(self) -> T {
+        self.output
+    }
 }
 
 impl ParseResult<Node> {

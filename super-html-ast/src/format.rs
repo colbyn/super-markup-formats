@@ -108,7 +108,7 @@ impl FormatEnvironment {
 }
 
 // ————————————————————————————————————————————————————————————————————————————
-// AST IMPLEMENTATION
+// API
 // ————————————————————————————————————————————————————————————————————————————
 
 impl Node {
@@ -128,48 +128,23 @@ impl Node {
         let format_settings = FormatSettings::default();
         let string = self.format(format_settings);
         let pretty = pretty_html::prettify_html(&string).unwrap_or_else(|error| {
-            eprintln!("PRETTY-HTML: {error}");
-            string
-        });
-        pretty
-    }
-}
-impl Element {
-    pub fn format(&self, settings: FormatSettings) -> String {
-        let environment = FormatEnvironment::new(settings);
-        self.render_impl(&environment)
-    }
-    pub fn pretty_format(&self) -> String {
-        let format_settings = FormatSettings::default();
-        let string = self.format(format_settings);
-        let pretty = pretty_html::prettify_html(&string).unwrap_or_else(|error| {
-            eprintln!("PRETTY-HTML: {error}");
-            string
-        });
-        pretty
-    }
-}
-impl Fragment {
-    pub fn format(&self, settings: FormatSettings) -> String {
-        let environment = FormatEnvironment::new(settings);
-        self.render_impl(&environment)
-    }
-    pub fn pretty_format(&self) -> String {
-        let format_settings = FormatSettings::default();
-        let string = self.format(format_settings);
-        let pretty = pretty_html::prettify_html(&string).unwrap_or_else(|error| {
-            eprintln!("PRETTY-HTML: {error}");
+            eprintln!("⚠️ HTML pretty printer failed: {error}");
             string
         });
         pretty
     }
 }
 
+// ————————————————————————————————————————————————————————————————————————————
+// INTERNAL — IMPLEMENTATION
+// ————————————————————————————————————————————————————————————————————————————
 
 impl Node {
     fn render_impl(&self, environment: &FormatEnvironment) -> String {
         match self {
-            Self::Text(text) => text.to_owned(),
+            Self::Text(text) => {
+                html_escape::encode_double_quoted_attribute(text.as_str()).to_string()
+            },
             Self::Element(element) => element.render_impl(environment),
             Self::Fragment(fragment) => fragment.render_impl(environment),
         }
@@ -180,7 +155,7 @@ impl Element {
     fn render_impl(&self, environment: &FormatEnvironment) -> String {
         let environment = environment.scope(&self.tag);
         // let level = environment.indent_spacing_string();
-        let attributes = format_attributes(&self.attributes);
+        let attributes = format_attributes(&self.attributes, &environment);
         if crate::constants::is_void_tag(&self.tag) && self.children.len() == 0 {
             format!(
                 "<{tag}{attributes} />",
@@ -208,7 +183,7 @@ impl Fragment {
 
 
 // ————————————————————————————————————————————————————————————————————————————
-// INTERNAL UTILITIES
+// INTERNAL — UTILITIES
 // ————————————————————————————————————————————————————————————————————————————
 
 fn indent_spacing_string(level: usize) -> String {
@@ -236,14 +211,13 @@ fn format_fragment(nodes: &Fragment, environment: &FormatEnvironment) -> String 
 
 fn format_attributes(
     attributes: &AttributeMap,
+    environment: &FormatEnvironment,
 ) -> String {
     let attributes = attributes
         .into_iter()
         .map(|(key, value)| {
-            // println!("{key:?}: {value:?}");
-            // if value.is_empty() {
-            //     return format!("{}", key);
-            // }
+            let key = html_escape::encode_double_quoted_attribute(key.as_str()).to_string();
+            let value = html_escape::encode_double_quoted_attribute(value.as_str()).to_string();
             format!("{key}={value:?}")
         })
         .collect::<Vec<_>>();
