@@ -16,3 +16,5 @@ pub mod visitors;
 pub mod format;
 pub mod constants;
 pub mod query;
+
+pub mod debug;

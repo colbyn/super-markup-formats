@@ -11,3 +11,7 @@ ego-tree = "=0.10.0"
 html-escape = "0.2.13"
 
 super-markdown-ast = { path = "../super-markdown-ast" }
+
+[dependencies.pretty-tree]
+git = "https://github.com/colbyn/pretty-tree-rs.git"
+rev = "ccad177"
